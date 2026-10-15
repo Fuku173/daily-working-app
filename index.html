@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>งานประจำวัน</title>
+<meta name="description" content="ระบบลงงานประจำวัน BLINGTASTIC STUDIO">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+  /* สีเดียวกับหน้าระบบ (gas/Index.html :root) · ฟอนต์ของเครื่อง — Android มีไทย/พม่าในตัว */
+  :root { --a: #2757d6; --save: #15803d; --ink: #1f2a27; --muted: #5f6b67; --line: #dfe5e2; --line-strong: #c7cfcc; --bad: #b3261e; --bg: #f3f5f4;
+    --font: 'Noto Sans Thai', 'Noto Sans Myanmar', 'Myanmar Text', Tahoma, sans-serif; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; background: #fff; color: var(--ink); font-family: var(--font); font-size: 17px; line-height: 1.45; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid var(--a); outline-offset: 2px; box-shadow: 0 0 0 2px #fff; }
+  [hidden] { display: none !important; }
+  /* หน้าระบบเต็มจอ — เลื่อนอยู่ในกรอบ */
+  #app { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+  .cover { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; background: #fff; }
+  .card { display: grid; gap: 14px; justify-items: center; width: min(100%, 460px); text-align: center; }
+  .card img { width: 96px; height: 96px; }
+  .card h1 { margin: 0; font-size: 20px; }
+  .card p { margin: 0; font-size: 15px; line-height: 1.6; color: var(--muted); }
+  .card .my { line-height: 1.6; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  button { min-height: 48px; padding: 8px 18px; border-radius: 12px; border: 1.5px solid var(--a); background: #fff; color: var(--a); font-size: 16px; font-weight: 600; cursor: pointer; }
+  button.primary { background: var(--a); color: #fff; }
+  button.link { min-height: 40px; border: 0; padding: 4px 8px; font-size: 14px; font-weight: 400; color: var(--muted); text-decoration: underline; }
+  .setup { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; background: var(--bg); }
+  .setup .card { padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: #fff; text-align: left; justify-items: stretch; }
+  .setup img { justify-self: center; }
+  /* ป้าย / ช่อง / ปุ่มบันทึก = .field-label / .input / .submit-btn ของหน้าระบบ */
+  label { font-weight: 600; font-size: 15px; color: #3f4b47; }
+  input { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: 8px; background: #fff; font-size: 17px; }
+  button.save { min-height: 54px; border: 0; background: var(--save); color: #fff; font-size: 19px; font-weight: 700; }
+  .error { margin: 0; color: var(--bad); font-size: 14px; }
+  .hint { margin: 0; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<iframe id="app" title="งานประจำวัน" hidden></iframe>
+
+<div class="cover" id="cover" hidden>
+  <div class="card" id="waiting" aria-live="polite">
+    <img src="icons/icon-192.png" alt="">
+    <h1>กำลังเปิดระบบ…</h1>
+    <p class="my" lang="my">စနစ် ဖွင့်နေသည်…</p>
+  </div>
+  <div class="card" id="help" role="alert" hidden>
+    <img src="icons/icon-192.png" alt="">
+    <h1>ยังเปิดระบบไม่ได้</h1>
+    <p>อาจยังไม่ได้เข้าสู่ระบบ Google หรือเน็ตหลุด — แตะ "เข้าสู่ระบบ Google" แล้วกลับมาที่แอปนี้ หรือแตะ "ลองใหม่"</p>
+    <p class="my" lang="my">Google သို့ မဝင်ရသေး သို့မဟုတ် အင်တာနက် ပြတ်နေနိုင်သည် — "Google သို့ ဝင်ရန်" ကို နှိပ်ပြီး ဤအက်ပ်သို့ ပြန်လာပါ သို့မဟုတ် "ပြန်ကြိုးစား" ကို နှိပ်ပါ</p>
+    <div class="row">
+      <button type="button" class="primary" id="signIn">เข้าสู่ระบบ Google · <span lang="my">Google သို့ ဝင်ရန်</span></button>
+      <button type="button" id="retry">ลองใหม่ · <span lang="my">ပြန်ကြိုးစား</span></button>
+    </div>
+    <button type="button" class="link" id="changeLink">เปลี่ยนลิงก์ระบบ (ผู้ดูแล)</button>
+  </div>
+</div>
+
+<form class="setup" id="setup" novalidate hidden>
+  <div class="card">
+    <img src="icons/icon-192.png" alt="" width="96" height="96">
+    <h1>ตั้งค่าแอปงานประจำวันครั้งแรก</h1>
+    <label for="execInput">ลิงก์ระบบ (ลงท้ายด้วย /exec)</label>
+    <input id="execInput" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec">
+    <p class="error" id="setupError" role="alert" hidden></p>
+    <button type="submit" class="save">บันทึกและเปิดระบบ</button>
+    <p class="hint">ลิงก์เก็บในเครื่องนี้เท่านั้น · ตั้งครั้งเดียว แล้วกดเมนู ⋮ ของ Chrome → ติดตั้งแอป</p>
+  </div>
+</form>
+
+<script src="app.js"></script>
+</body>
+</html>
