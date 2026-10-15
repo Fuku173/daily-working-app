@@ -126,6 +126,8 @@
     root.open(execUrl, '_blank', 'noopener');
   });
   document.getElementById('retry').addEventListener('click', openApp);
+  // ผู้ดูแล: เอาข้อความออกให้เห็นว่า Google แสดงอะไรในกรอบ (เช่น "ต้องมีสิทธิ์เข้าถึง" = บัญชีในเครื่องเปิดลิงก์นี้ไม่ได้) — แคปส่งผู้ดูแลระบบ
+  document.getElementById('peek').addEventListener('click', function () { cover.hidden = true; });
   document.getElementById('changeLink').addEventListener('click', function () { showSetup(''); });
 
   setup.addEventListener('submit', function (event) {
@@ -143,16 +145,29 @@
     openApp();
   });
 
-  // เริ่ม: ลิงก์ตั้งค่าใน # ก่อน (บันทึกแล้วลบออกจากแถบที่อยู่) → ลิงก์ที่เครื่องจำไว้ → ไม่มี = หน้าตั้งค่า
-  var fromHash = readSetupFragment(root.location.hash);
-  if (fromHash) {
-    var fromHashUrl = normalizeExecUrl(fromHash, root.location.hostname);
-    if (fromHashUrl) writeStore(fromHashUrl);
+  // ลิงก์ตั้งค่าใน # → บันทึก (ถูกต้อง) แล้วลบออกจากแถบที่อยู่ · คืน 'saved' / 'invalid' / '' (ไม่มี)
+  function takeSetupHash() {
+    var fromHash = readSetupFragment(root.location.hash);
+    if (!fromHash) return '';
+    var url = normalizeExecUrl(fromHash, root.location.hostname);
+    if (url) writeStore(url);
     try { root.history.replaceState(null, '', root.location.pathname + root.location.search); } catch (error) { /* ไม่สำคัญ */ }
+    return url ? 'saved' : 'invalid';
   }
-  execUrl = normalizeExecUrl(readStore(), root.location.hostname);
-  if (execUrl) openApp();
-  else showSetup(fromHash ? 'ลิงก์ในลิงก์ตั้งค่าไม่ถูกต้อง — วางลิงก์ระบบที่ลงท้ายด้วย /exec' : '');
+
+  // เริ่ม: ลิงก์ตั้งค่าก่อน → ลิงก์ที่เครื่องจำไว้ → ไม่มี / ลิงก์ตั้งค่าผิด = หน้าตั้งค่า (ช่องมีลิงก์เดิมให้)
+  function start() {
+    var taken = takeSetupHash();
+    execUrl = normalizeExecUrl(readStore(), root.location.hostname);
+    if (execUrl && taken !== 'invalid') openApp();
+    else showSetup(taken === 'invalid' ? 'ลิงก์ในลิงก์ตั้งค่าไม่ถูกต้อง — วางลิงก์ระบบที่ลงท้ายด้วย /exec' : '');
+  }
+
+  // เปิดลิงก์ตั้งค่าตอนหน้านี้เปิดอยู่แล้ว = เปลี่ยนแค่ # (ไม่โหลดหน้าใหม่) — ใช้ลิงก์ใหม่ทันที
+  root.addEventListener('hashchange', function () {
+    if (readSetupFragment(root.location.hash)) start();
+  });
+  start();
 
   // เปิดหน้านี้ได้แม้เน็ตหลุด (ข้อความบอกให้ลองใหม่แทนหน้าไดโนเสาร์ของ Chrome)
   if ('serviceWorker' in navigator) {
